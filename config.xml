@@ -1,0 +1,12 @@
+<?xml version='1.0' encoding='utf-8'?>
+<widget id="com.ryzan.apkbuilder" version="1.0.0" xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/1.0">
+    <name>APK Builder Pro</name>
+    <description>App created with APK Builder</description>
+    <author email="dev@apkbuilder.com">Developer</author>
+    <content src="index.html" />
+    <access origin="*" />
+    <icon src="res/icon.png" />
+    <preference name="android-minSdkVersion" value="24" />
+    <preference name="android-targetSdkVersion" value="34" />
+    <preference name="android-compileSdkVersion" value="34" />
+</widget>
