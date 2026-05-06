@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>APK Builder Pro</title>
+    
+    <style>
+        /* ==========================================
+           PURE CSS THEME (OFFLINE READY)
+           ========================================== */
+        :root {
+            --darkBg: #0f1115; --panelBg: #181b21; --inputBg: #0f1115;
+            --accent: #aedeb5; --accentHover: #98cda0; --borderClr: #2a2e37;
+            --textMuted: #8b949e; --termGreen: #4ade80; --red: #f87171; --yellow: #fbbf24;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        body { background-color: var(--darkBg); color: white; line-height: 1.5; padding-bottom: 40px; }
+        .hidden { display: none !important; }
+
+        /* Custom Toast Notification */
+        #toast {
+            position: fixed; top: -100px; left: 50%; transform: translateX(-50%);
+            background: var(--red); color: white; padding: 12px 24px;
+            border-radius: 30px; font-size: 13px; font-weight: bold;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            z-index: 99999; text-align: center; width: 90%; max-width: 400px;
+            transition: top 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+        }
+        #toast.show { top: 20px; }
+
+        .header { position: sticky; top: 0; background: rgba(24, 27, 33, 0.95); backdrop-filter: blur(8px); border-bottom: 1px solid var(--borderClr); z-index: 50; padding-top: 15px; }
+        .container { max-width: 600px; margin: 0 auto; padding: 0 20px; }
+        
+        .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .logo-area { display: flex; align-items: center; gap: 12px; }
+        .logo-box { width: 40px; height: 40px; background: var(--accent); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px; box-shadow: 0 4px 10px rgba(174, 222, 181, 0.2); }
+        .app-title { font-weight: bold; font-size: 18px; line-height: 1.2; }
+        .app-subtitle { font-size: 10px; color: var(--textMuted); letter-spacing: 1px; font-family: monospace; }
+        
+        .lang-switch { display: flex; background: var(--darkBg); border: 1px solid var(--borderClr); border-radius: 8px; padding: 4px; font-size: 12px; font-weight: 600; }
+        .lang-btn { background: none; border: none; color: var(--textMuted); padding: 4px 10px; border-radius: 6px; }
+        .lang-btn.active { background: var(--panelBg); color: white; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+
+        .tabs { display: flex; }
+        .tab-btn { flex: 1; background: none; border: none; color: var(--textMuted); padding: 15px; font-size: 18px; border-bottom: 2px solid transparent; cursor: pointer; transition: 0.2s; }
+        .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+        .content-area { padding-top: 25px; }
+        .card { background: var(--panelBg); border: 1px solid var(--borderClr); border-radius: 16px; padding: 20px; margin-bottom: 20px; box-shadow: 0 10px 20px rgba(0,0,0,0.3); }
+        
+        .card-header { display: flex; align-items: center; gap: 8px; font-weight: bold; font-size: 16px; margin-bottom: 5px; }
+        .card-desc { font-size: 12px; color: var(--textMuted); margin-bottom: 20px; }
+
+        .form-group { margin-bottom: 16px; }
+        .form-label { display: block; font-size: 12px; font-weight: 600; color: #d1d5db; margin-bottom: 6px; }
+        .req { color: var(--red); }
+        .form-input, .form-select { width: 100%; background: var(--inputBg); border: 1px solid var(--borderClr); border-radius: 10px; padding: 12px 16px; color: white; font-size: 14px; outline: none; transition: 0.2s; }
+        .form-input:focus, .form-select:focus { border-color: var(--accent); }
+        .form-hint { font-size: 10px; color: var(--textMuted); margin-top: 6px; }
+
+        .input-group { position: relative; }
+        .btn-eye { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); background: none; border: none; font-size: 16px; cursor: pointer; opacity: 0.6; }
+
+        .icon-upload-wrap { display: flex; align-items: center; gap: 15px; background: var(--inputBg); border: 1px dashed var(--borderClr); padding: 15px; border-radius: 12px; }
+        .icon-preview { width: 60px; height: 60px; background: var(--panelBg); border-radius: 15px; border: 1px solid var(--borderClr); display: flex; align-items: center; justify-content: center; overflow: hidden; }
+        .icon-preview img { width: 100%; height: 100%; object-fit: cover; }
+        .icon-upload-btn { background: var(--panelBg); border: 1px solid var(--borderClr); color: white; padding: 8px 15px; border-radius: 8px; font-size: 12px; cursor: pointer; }
+
+        .drop-zone { border: 2px dashed var(--borderClr); border-radius: 12px; padding: 30px 20px; text-align: center; position: relative; background: var(--darkBg); transition: 0.3s; }
+        .drop-zone.dragover { border-color: var(--accent); background: rgba(174, 222, 181, 0.05); }
+        .drop-input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; z-index: 10; }
+        
+        .icon-circle { width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; margin: 0 auto 15px auto; }
+        .bg-accent-light { background: rgba(174, 222, 181, 0.1); color: var(--accent); }
+        .bg-green-light { background: rgba(74, 222, 128, 0.1); color: #4ade80; }
+        .drop-title { font-weight: bold; font-size: 14px; margin-bottom: 5px; }
+
+        .btn-main { width: 100%; background: var(--accent); color: var(--darkBg); border: none; padding: 16px; border-radius: 12px; font-weight: bold; font-size: 15px; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px; box-shadow: 0 4px 15px rgba(174, 222, 181, 0.2); transition: 0.2s; }
+        .btn-main:hover { background: var(--accentHover); }
+        .btn-main:active { transform: scale(0.97); }
+        .btn-green { background: #22c55e; color: white; text-decoration: none; box-shadow: 0 4px 15px rgba(34, 197, 94, 0.2); }
+        .btn-green:hover { background: #16a34a; }
+        .btn-red { background: #ef4444; color: white; text-decoration: none; margin-top: 10px; }
+
+        .stepper { padding-left: 10px; }
+        .step-item { position: relative; padding-left: 35px; margin-bottom: 25px; }
+        .step-item:last-child { margin-bottom: 0; }
+        .step-line { content: ''; position: absolute; left: 11px; top: 24px; bottom: -25px; width: 2px; background: var(--borderClr); }
+        .step-item:last-child .step-line { display: none; }
+        
+        .step-icon { position: absolute; left: 0; top: 0; width: 24px; height: 24px; border-radius: 50%; background: var(--panelBg); border: 2px solid var(--borderClr); display: flex; align-items: center; justify-content: center; font-size: 10px; color: var(--textMuted); z-index: 2; }
+        
+        .step-item.active .step-icon { border-color: var(--accent); color: var(--accent); }
+        .step-item.done .step-icon { background: var(--accent); border-color: var(--accent); color: var(--darkBg); }
+        .step-item.error .step-icon { border-color: var(--red); color: var(--red); }
+        .step-item.done .step-line { background: var(--accent); }
+        
+        .step-title { font-weight: bold; font-size: 14px; }
+        .step-desc { font-size: 12px; color: var(--textMuted); }
+
+        .terminal-wrap { border: 1px solid var(--borderClr); border-radius: 12px; overflow: hidden; margin-top: 20px; }
+        .terminal-header { background: rgba(42, 46, 55, 0.5); padding: 8px 15px; border-bottom: 1px solid var(--borderClr); display: flex; justify-content: space-between; align-items: center; }
+        .terminal-title { font-size: 12px; font-weight: bold; color: var(--textMuted); font-family: monospace; }
+        .btn-clear { background: none; border: none; color: var(--textMuted); cursor: pointer; }
+        
+        .terminal-body { background: #0d0f12; height: 250px; overflow-y: auto; padding: 15px; font-family: monospace; font-size: 11px; }
+        .log-line { margin-bottom: 5px; display: flex; gap: 10px; line-height: 1.4; }
+        .log-time { color: #6e7681; flex-shrink: 0; }
+        .log-msg { color: var(--termGreen); }
+        .log-error { color: var(--red); }
+        .log-warn { color: var(--yellow); }
+
+        .mockup-wrap { display: flex; flex-direction: column; align-items: center; padding: 20px 0; }
+        .phone { width: 280px; height: 560px; background: var(--darkBg); border: 8px solid #1f2937; border-radius: 36px; position: relative; overflow: hidden; box-shadow: 0 25px 50px rgba(0,0,0,0.5); }
+        .notch { position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 120px; height: 24px; background: #1f2937; border-bottom-left-radius: 12px; border-bottom-right-radius: 12px; z-index: 20; }
+        .phone iframe { width: 100%; height: 100%; background: white; border: none; }
+        
+        .text-center { text-align: center; }
+        .mt-4 { margin-top: 15px; }
+        
+        .copy-box { background: rgba(0,0,0,0.3); border: 1px dashed var(--borderClr); padding: 15px; border-radius: 12px; }
+        .copy-input { width: 100%; background: var(--darkBg); border: 1px solid var(--borderClr); color: var(--accent); padding: 8px; border-radius: 8px; font-family: monospace; font-size: 11px; text-align: center; margin-bottom: 8px; outline: none; }
+    </style>
+</head>
+<body>
+
+    <div id="toast">Pesan Sistem</div>
+
+    <div class="header">
+        <div class="container header-top">
+            <div class="logo-area">
+                <div class="logo-box">🔨</div>
+                <div>
+                    <div class="app-title">APK Builder</div>
+                    <div class="app-subtitle">HTML TO ANDROID APK</div>
+                </div>
+            </div>
+            <div class="lang-switch">
+                <button class="lang-btn">EN</button>
+                <button class="lang-btn active">ID</button>
+            </div>
+        </div>
+        
+        <div class="container tabs">
+            <button onclick="switchTab('editor')" id="tab-editor" class="tab-btn active">💻</button>
+            <button onclick="switchTab('preview')" id="tab-preview" class="tab-btn">👁️</button>
+            <button onclick="switchTab('build')" id="tab-build" class="tab-btn">🚀</button>
+            <button onclick="switchTab('settings')" id="tab-settings" class="tab-btn">⚙️</button>
+        </div>
+    </div>
+
+    <div class="container content-area">
+        
+        <div id="content-editor">
+            
+            <div class="card">
+                <div class="card-header">🐙 GitHub Integration</div>
+                <div class="card-desc">Konfigurasi akun GitHub untuk mesin kompilasi.</div>
+                
+                <div class="form-group">
+                    <label class="form-label">GitHub Username <span class="req">*</span></label>
+                    <input type="text" id="ghUser" placeholder="username-anda" class="form-input">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Personal Access Token <span class="req">*</span></label>
+                    <div class="input-group">
+                        <input type="password" id="ghToken" placeholder="ghp_xxxxxxxxxxxxxxxxx" class="form-input" style="font-family: monospace;">
+                        <button type="button" onclick="togglePassword()" class="btn-eye" id="eyeIcon">👁️</button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Repository Name <span class="req">*</span></label>
+                    <input type="text" id="ghRepo" placeholder="my-android-app" class="form-input" style="font-family: monospace;">
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">📱 App Configuration</div>
+                <div class="card-desc">Tentukan identitas, versi, dan ikon aplikasi Android Anda.</div>
+
+                <div class="form-group">
+                    <label class="form-label">APK Name</label>
+                    <input type="text" id="appName" placeholder="Contoh: Alat Hitungku" class="form-input">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Package Name</label>
+                    <input type="text" id="pkgName" placeholder="com.example.myapp" class="form-input">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Version Name</label>
+                    <input type="text" id="appVersion" value="1.0.0" class="form-input">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">App Icon</label>
+                    <div class="icon-upload-wrap">
+                        <div class="icon-preview">
+                            <img id="iconPreviewImg" src="" class="hidden">
+                            <span id="iconPlaceholder">🖼️</span>
+                        </div>
+                        <div>
+                            <input type="file" id="appIcon" accept="image/png" class="hidden">
+                            <button class="icon-upload-btn" onclick="document.getElementById('appIcon').click()">Upload Icon</button>
+                            <div class="form-hint mt-1">Disarankan PNG, 512x512px.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">📄 HTML Source File <span class="req">*</span></div>
+                <div class="card-desc">Unggah file HTML Anda (Pastikan script & CSS sudah di-inline).</div>
+                
+                <div class="drop-zone" id="dropZone">
+                    <input type="file" id="htmlFile" accept=".html" class="drop-input">
+                    <div id="uploadUI">
+                        <div class="icon-circle bg-accent-light">⬆️</div>
+                        <div class="drop-title">Ketuk untuk memilih file HTML</div>
+                    </div>
+                    <div id="successUI" class="hidden">
+                        <div class="icon-circle bg-green-light">✅</div>
+                        <div class="drop-title" id="fileNameDisplay" style="color: #4ade80;">index.html</div>
+                        <div class="form-hint">File HTML berhasil dimuat!</div>
+                    </div>
+                </div>
+            </div>
+            
+            <button onclick="switchTab('build')" class="btn-main">Lanjut ke Build ➡️</button>
+        </div>
+
+        <div id="content-preview" class="hidden mockup-wrap">
+            <div class="phone">
+                <div class="notch"></div>
+                <iframe id="previewFrame" srcdoc="<div style='display:flex;height:100vh;align-items:center;justify-content:center;font-family:sans-serif;color:#888;text-align:center;padding:20px;'>Silakan upload file HTML terlebih dahulu di Tab Editor.</div>"></iframe>
+            </div>
+            <div class="form-hint mt-4">📱 Live Mobile Preview</div>
+        </div>
+
+        <div id="content-build" class="hidden">
+            <div class="card">
+                <div id="buildInitialState" class="text-center" style="padding: 20px 0;">
+                    <div class="icon-circle bg-accent-light" style="width: 70px; height: 70px; font-size: 30px;">🚀</div>
+                    <div class="card-header" style="justify-content: center; font-size: 20px;">Ready to Build</div>
+                    <div class="card-desc" style="max-width: 80%; margin: 0 auto 20px auto;">
+                        <span style="color: #4ade80;">✨ Update:</span> Sistem dilengkapi <b>Kotak Salin Tautan (Copy Link)</b> jika WebView/Aplikasi memblokir tombol download.
+                    </div>
+                    
+                    <button id="btnStartBuild" onclick="startBuildProcess()" class="btn-main" style="max-width: 250px; margin: 0 auto;">
+                        ▶️ Mulai Proses Build
+                    </button>
+                </div>
+
+                <div id="buildStepperState" class="hidden stepper">
+                    <div class="step-item" id="step1"><div class="step-line"></div><div class="step-icon">1</div><div class="step-title">Create Repository</div></div>
+                    <div class="step-item" id="step2"><div class="step-line"></div><div class="step-icon">2</div><div class="step-title">Upload Web & Icon</div></div>
+                    <div class="step-item" id="step3"><div class="step-line"></div><div class="step-icon">3</div><div class="step-title">Trigger GitHub Actions</div></div>
+                    <div class="step-item" id="step4"><div class="step-line"></div><div class="step-icon">4</div><div class="step-title">Building Signed APK</div><div class="step-desc">Membuat Keystore & Merakit Release App...</div></div>
+                    <div class="step-item" id="step5"><div class="step-line"></div><div class="step-icon">5</div><div class="step-title">Selesai</div></div>
+                </div>
+            </div>
+
+            <div id="terminalSection" class="hidden terminal-wrap">
+                <div class="terminal-header">
+                    <span class="terminal-title">>_ BUILD LOGS</span>
+                    <button onclick="clearTerminal()" class="btn-clear">🗑️</button>
+                </div>
+                <div class="terminal-body" id="terminalOutput"></div>
+            </div>
+
+            <div id="downloadSection" class="hidden mt-4 text-center">
+                <a href="#" id="btnDownloadApk" class="btn-main btn-green">⬇️ Buka Halaman Download APK</a>
+                <div class="form-hint mt-4" style="color: #4ade80;">Bebas peringatan Play Protect! Klik file berakhiran -Signed.zip di bagian Artifact.</div>
+                
+                <div class="mt-4 copy-box">
+                    <div class="form-hint mb-2" style="color: var(--yellow);">⚠️ Jika tombol di atas tidak merespon di aplikasi ini:</div>
+                    <input type="text" id="rawLinkInput" class="copy-input" readonly value="https://github.com/...">
+                    <button onclick="copyApkLink()" style="background: var(--panelBg); border: 1px solid var(--borderClr); color: white; padding: 6px 15px; border-radius: 6px; font-size: 11px; cursor: pointer;">📋 Salin Link & Buka di Chrome</button>
+                </div>
+            </div>
+
+            <div id="debugSection" class="hidden mt-4 text-center">
+                <div class="form-hint mt-4" style="color: var(--red);">Terjadi Kegagalan pada Server GitHub!</div>
+                <a href="#" id="btnDebugLink" class="btn-main btn-red" onclick="window.location.href=this.href; return false;">🔍 Buka Log GitHub untuk Melihat Error Asli</a>
+            </div>
+        </div>
+
+        <div id="content-settings" class="hidden card text-center" style="padding: 40px 20px;">
+            <div class="text-2xl opacity-50 mb-2">⚙️</div>
+            <div class="card-header" style="justify-content: center;">Pengaturan</div>
+            <div class="card-desc">Dilengkapi tombol Copy Link untuk mengatasi WebView Android yang memblokir navigasi url.</div>
+        </div>
+    </div>
+
+    <script>
+        // --- Sistem Toast ---
+        let toastTimeout;
+        function showToast(message, isError = true) {
+            const toast = document.getElementById('toast');
+            toast.innerText = message;
+            toast.style.background = isError ? "var(--red)" : "#10b981";
+            toast.classList.add('show');
+            clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => { toast.classList.remove('show'); }, 3500);
+        }
+
+        // --- Fungsi Salin Link ---
+        function copyApkLink() {
+            var copyText = document.getElementById("rawLinkInput");
+            copyText.select();
+            copyText.setSelectionRange(0, 99999);
+            try {
+                document.execCommand("copy");
+                showToast("✅ Link disalin! Buka Google Chrome dan Paste link tersebut.", false);
+            } catch (e) {
+                showToast("❌ Gagal menyalin link.");
+            }
+        }
+
+        function switchTab(tabId) {
+            ['editor', 'preview', 'build', 'settings'].forEach(id => {
+                const tabBtn = document.getElementById('tab-' + id);
+                const contentDiv = document.getElementById('content-' + id);
+                if(tabBtn) tabBtn.classList.remove('active');
+                if(contentDiv) contentDiv.classList.add('hidden');
+            });
+            const activeTab = document.getElementById('tab-' + tabId);
+            const activeContent = document.getElementById('content-' + tabId);
+            if(activeTab) activeTab.classList.add('active');
+            if(activeContent) activeContent.classList.remove('hidden');
+        }
+
+        function togglePassword() {
+            const input = document.getElementById('ghToken');
+            const icon = document.getElementById('eyeIcon');
+            input.type = input.type === 'password' ? 'text' : 'password';
+            icon.innerText = input.type === 'password' ? '👁️' : '🙈';
+        }
+
+        const htmlInput = document.getElementById('htmlFile');
+        const iconInput = document.getElementById('appIcon');
+        let uploadedHtmlBase64 = null;
+        let uploadedIconBase64 = null;
+
+        htmlInput.addEventListener('change', () => {
+            const file = htmlInput.files[0];
+            if (!file) return;
+            document.getElementById('uploadUI').classList.add('hidden');
+            document.getElementById('successUI').classList.remove('hidden');
+            document.getElementById('fileNameDisplay').innerText = file.name;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const rawHtml = e.target.result;
+                document.getElementById('previewFrame').srcdoc = rawHtml;
+                uploadedHtmlBase64 = btoa(unescape(encodeURIComponent(rawHtml)));
+            };
+            reader.readAsText(file);
+        });
+
+        iconInput.addEventListener('change', () => {
+            const file = iconInput.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const dataUrl = e.target.result;
+                document.getElementById('iconPreviewImg').src = dataUrl;
+                document.getElementById('iconPreviewImg').classList.remove('hidden');
+                document.getElementById('iconPlaceholder').classList.add('hidden');
+                uploadedIconBase64 = dataUrl.split(',')[1]; 
+            };
+            reader.readAsDataURL(file);
+        });
+
+        function logTerm(message, type = 'info') {
+            const term = document.getElementById('terminalOutput');
+            const time = new Date().toLocaleTimeString('id-ID', { hour12: false, hour: '2-digit', minute:'2-digit', second:'2-digit' });
+            let colorClass = 'log-msg';
+            if (type === 'error') colorClass = 'log-error';
+            if (type === 'warn') colorClass = 'log-warn';
+
+            const line = document.createElement('div');
+            line.className = 'log-line';
+            line.innerHTML = `<span class="log-time">${time}</span> <span class="${colorClass}">${message}</span>`;
+            term.appendChild(line);
+            term.scrollTop = term.scrollHeight;
+        }
+        function clearTerminal() { document.getElementById('terminalOutput').innerHTML = ''; }
+
+        function updateStep(stepNum, status) {
+            const step = document.getElementById('step' + stepNum);
+            const icon = step.querySelector('.step-icon');
+            step.className = 'step-item';
+            
+            if (status === 'active') {
+                step.classList.add('active'); icon.innerText = '⏳';
+            } else if (status === 'done') {
+                step.classList.add('done'); icon.innerText = '✅';
+            } else if (status === 'error') {
+                step.classList.add('error'); icon.innerText = '❌';
+            }
+        }
+
+        async function startBuildProcess() {
+            const btn = document.getElementById('btnStartBuild');
+            const originalBtnText = btn.innerHTML;
+            
+            try {
+                btn.innerHTML = '⏳ Memeriksa...';
+                btn.disabled = true;
+
+                const user = document.getElementById('ghUser')?.value.trim();
+                const token = document.getElementById('ghToken')?.value.trim();
+                const repo = document.getElementById('ghRepo')?.value.trim();
+                const isPrivate = document.getElementById('ghVisibility')?.value === 'private';
+
+                const appName = document.getElementById('appName')?.value.trim() || 'My_Awesome_App';
+                const pkgName = document.getElementById('pkgName')?.value.trim() || 'com.example.myapp';
+                
+                if (!user || !token || !repo) {
+                    showToast("⚠️ Mohon lengkapi Username, Token, dan Nama Repo!");
+                    switchTab('editor'); return;
+                }
+                if (!uploadedHtmlBase64) {
+                    showToast("⚠️ Anda belum mengunggah file HTML!");
+                    switchTab('editor'); return;
+                }
+
+                document.getElementById('buildInitialState').classList.add('hidden');
+                document.getElementById('buildStepperState').classList.remove('hidden');
+                document.getElementById('terminalSection').classList.remove('hidden');
+                document.getElementById('downloadSection').classList.add('hidden');
+                document.getElementById('debugSection').classList.add('hidden');
+                clearTerminal();
+
+                const headers = { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json', 'Content-Type': 'application/json' };
+
+                // STEP 1
+                updateStep(1, 'active');
+                logTerm(`Creating repository: ${repo}...`);
+                const createRepoRes = await fetch('https://api.github.com/user/repos', {
+                    method: 'POST', headers: headers, body: JSON.stringify({ name: repo, private: isPrivate, auto_init: true })
+                });
+
+                if (createRepoRes.status === 201 || createRepoRes.status === 422) {
+                    logTerm(createRepoRes.status === 201 ? `Repository created.` : `Repository exists. Proceeding...`);
+                } else throw new Error((await createRepoRes.json()).message);
+                updateStep(1, 'done');
+                await new Promise(r => setTimeout(r, 1500)); 
+
+                // STEP 2
+                updateStep(2, 'active');
+                async function uploadFileToGit(path, contentBase64, commitMsg) {
+                    logTerm(`Uploading ${path}...`);
+                    let sha = undefined;
+                    try {
+                        const checkRes = await fetch(`https://api.github.com/repos/${user}/${repo}/contents/${path}`, { headers });
+                        if (checkRes.ok) sha = (await checkRes.json()).sha;
+                    } catch(e) {}
+                    const body = { message: commitMsg, content: contentBase64 };
+                    if (sha) body.sha = sha;
+                    const res = await fetch(`https://api.github.com/repos/${user}/${repo}/contents/${path}`, { method: 'PUT', headers: headers, body: JSON.stringify(body) });
+                    if(!res.ok) throw new Error((await res.json()).message);
+                }
+
+                await uploadFileToGit('www/index.html', uploadedHtmlBase64, 'Upload HTML source');
+                
+                let iconTagXml = '';
+                if (uploadedIconBase64) {
+                    await uploadFileToGit('res/icon.png', uploadedIconBase64, 'Upload App Icon');
+                    iconTagXml = '<icon src="res/icon.png" />';
+                    logTerm(`App Icon disematkan.`, 'success');
+                }
+
+                const configXml = `<?xml version='1.0' encoding='utf-8'?>
+<widget id="${pkgName}" version="1.0.0" xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/1.0">
+    <name>${appName}</name>
+    <description>App created with APK Builder</description>
+    <author email="dev@apkbuilder.com">Developer</author>
+    <content src="index.html" />
+    <access origin="*" />
+    ${iconTagXml}
+    <preference name="android-minSdkVersion" value="24" />
+    <preference name="android-targetSdkVersion" value="34" />
+    <preference name="android-compileSdkVersion" value="34" />
+</widget>`;
+                await uploadFileToGit('config.xml', btoa(configXml), 'Upload config.xml');
+                updateStep(2, 'done');
+
+                // STEP 3: WORKFLOW CORDOVA 13 + SDK 34
+                updateStep(3, 'active');
+                const cleanAppName = appName.replace(/[^a-zA-Z0-9]/g, '_');
+                
+                const workflowYml = `
+name: Build Release Signed APK
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: actions/setup-java@v4
+        with: { distribution: 'temurin', java-version: '17' }
+        
+      - uses: actions/setup-node@v4
+        with: { node-version: '20' }
+      
+      - name: Setup Build Tools & Apksigner
+        run: sudo apt-get update && sudo apt-get install -y apksigner zipalign
+        
+      - name: Install Cordova
+        run: npm install -g cordova
+        
+      - name: Build & Sign APK
+        run: |
+          export CI=true
+          
+          mkdir -p source_files
+          mv config.xml source_files/
+          mv www source_files/
+          if [ -d "res" ]; then mv res source_files/; fi
+          
+          cordova create app "${pkgName}" "${cleanAppName}"
+          cd app
+          
+          rm -rf www/*
+          cp -r ../source_files/www/* www/
+          cp ../source_files/config.xml .
+          if [ -d "../source_files/res" ]; then cp -r ../source_files/res .; fi
+          
+          cordova platform add android@13.0.0
+          
+          cordova build android --release -- --packageType=apk
+          
+          keytool -genkey -v -keystore release.keystore -alias release -keyalg RSA -keysize 2048 -validity 10000 -storepass password123 -keypass password123 -dname "CN=${cleanAppName},O=Developer,C=ID"
+          
+          APK_FILE=\$(find platforms/android/app/build/outputs/apk/release -name "*-unsigned.apk" | head -n 1)
+          
+          if [ -z "\$APK_FILE" ]; then
+             APK_FILE=\$(find . -name "*.apk" | head -n 1)
+          fi
+          
+          echo "Ditemukan APK: \$APK_FILE"
+          
+          zipalign -v -p 4 "\$APK_FILE" aligned.apk
+          
+          apksigner sign --ks release.keystore --ks-pass pass:password123 --out ../${cleanAppName}-Signed.apk aligned.apk
+          
+      - name: Upload Final Signed Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${cleanAppName}-Signed-APK
+          path: '*Signed.apk'
+`;
+                await uploadFileToGit('.github/workflows/build.yml', btoa(workflowYml), 'Update Workflow (SDK 34 Final)');
+                logTerm(`Pipeline untuk Signed Release APK dipicu.`, 'info');
+                updateStep(3, 'done');
+
+                // STEP 4: MONITORING
+                updateStep(4, 'active');
+                logTerm(`Server sedang merakit aplikasi rilis...`);
+
+                let runId = null;
+                let buildFinished = false;
+                
+                for(let attempt=0; attempt < 40; attempt++) { 
+                    await new Promise(r => setTimeout(r, 10000)); 
+                    try {
+                        const runsRes = await fetch(`https://api.github.com/repos/${user}/${repo}/actions/runs?per_page=1`, { headers });
+                        const runsData = await runsRes.json();
+
+                        if (runsData.workflow_runs && runsData.workflow_runs.length > 0) {
+                            const run = runsData.workflow_runs[0];
+                            runId = run.id;
+                            logTerm(`Status: [${run.status.toUpperCase()}]`);
+
+                            if (run.status === 'completed') {
+                                buildFinished = true;
+                                if (run.conclusion === 'success') {
+                                    logTerm(`Build & Sign SUCCESSFUL!`, 'info');
+                                    updateStep(4, 'done'); updateStep(5, 'done');
+                                    
+                                    // Set Link untuk Tombol Download
+                                    const githubRunUrl = `https://github.com/${user}/${repo}/actions/runs/${runId}`;
+                                    const btnDl = document.getElementById('btnDownloadApk');
+                                    btnDl.href = githubRunUrl;
+                                    btnDl.onclick = function(e){
+                                        e.preventDefault();
+                                        window.location.assign(githubRunUrl);
+                                    };
+                                    
+                                    // Set Link Raw untuk Kotak Salin
+                                    document.getElementById('rawLinkInput').value = githubRunUrl;
+                                    
+                                    document.getElementById('downloadSection').classList.remove('hidden');
+                                    showToast("✅ Berhasil! Silakan download APK Anda.", false);
+                                } else {
+                                    throw new Error(`Conclusion: ${run.conclusion}`);
+                                }
+                                break;
+                            }
+                        }
+                    } catch (e) {
+                        if(buildFinished) throw e;
+                    }
+                }
+                if(!buildFinished) throw new Error("Timeout.");
+
+            } catch (error) {
+                logTerm(`ERROR: ${error.message}`, 'error');
+                updateStep(4, 'error');
+                document.getElementById('buildInitialState').classList.remove('hidden');
+                document.getElementById('buildStepperState').classList.add('hidden');
+                
+                document.getElementById('debugSection').classList.remove('hidden');
+                
+                const githubErrorUrl = `https://github.com/${document.getElementById('ghUser')?.value.trim()}/${document.getElementById('ghRepo')?.value.trim()}/actions`;
+                document.getElementById('btnDebugLink').href = githubErrorUrl;
+                
+                showToast("❌ Proses Gagal. Cek terminal log untuk info.");
+            } finally {
+                btn.innerHTML = originalBtnText;
+                btn.disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>
