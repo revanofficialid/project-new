@@ -1,0 +1,66 @@
+
+name: Build Release Signed APK
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: actions/setup-java@v4
+        with: { distribution: 'temurin', java-version: '17' }
+        
+      - uses: actions/setup-node@v4
+        with: { node-version: '20' }
+      
+      - name: Setup Build Tools & Apksigner
+        run: sudo apt-get update && sudo apt-get install -y apksigner zipalign
+        
+      - name: Install Cordova
+        run: npm install -g cordova
+        
+      - name: Build & Sign APK
+        run: |
+          export CI=true
+          
+          mkdir -p source_files
+          mv config.xml source_files/
+          mv www source_files/
+          if [ -d "res" ]; then mv res source_files/; fi
+          
+          cordova create app "com.ryzan.apkbuilder" "APK_Builder_Pro"
+          cd app
+          
+          rm -rf www/*
+          cp -r ../source_files/www/* www/
+          cp ../source_files/config.xml .
+          if [ -d "../source_files/res" ]; then cp -r ../source_files/res .; fi
+          
+          cordova platform add android@13.0.0
+          
+          cordova build android --release -- --packageType=apk
+          
+          keytool -genkey -v -keystore release.keystore -alias release -keyalg RSA -keysize 2048 -validity 10000 -storepass password123 -keypass password123 -dname "CN=APK_Builder_Pro,O=Developer,C=ID"
+          
+          APK_FILE=$(find platforms/android/app/build/outputs/apk/release -name "*-unsigned.apk" | head -n 1)
+          
+          if [ -z "$APK_FILE" ]; then
+             APK_FILE=$(find . -name "*.apk" | head -n 1)
+          fi
+          
+          echo "Ditemukan APK: $APK_FILE"
+          
+          zipalign -v -p 4 "$APK_FILE" aligned.apk
+          
+          apksigner sign --ks release.keystore --ks-pass pass:password123 --out ../APK_Builder_Pro-Signed.apk aligned.apk
+          
+      - name: Upload Final Signed Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: APK_Builder_Pro-Signed-APK
+          path: '*Signed.apk'
